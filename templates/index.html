@@ -616,6 +616,31 @@
             box-shadow: var(--shadow-light);
             backdrop-filter: blur(5px);
             -webkit-backdrop-filter: blur(5px);
+            position: relative;
+            padding-right: 30px;
+        }
+        .close-btn {
+            position: absolute;
+            top: 12px;              
+            right: 12px;            
+            background: none;
+            border: none;
+            color: inherit;
+            cursor: pointer;
+            font-size: 22px;        
+            opacity: 0.7;
+            width: 24px;            
+            height: 24px;           
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;     
+            transition: all 0.2s;   
+        }
+
+        .close-btn:hover {
+            opacity: 1;
+            background: rgba(255, 255, 255, 0.2); 
         }
 
         
@@ -695,7 +720,7 @@
         <!-- Main Prediction Card -->
         <div class="card prediction-card">
             <h2><i class="fas fa-chart-line"></i> Tomorrow's Market Prediction</h2>
-            <div class="prediction-direction" id="predictionDirection">LOADING...</div>
+            <div class="prediction-direction" id="predictionDirection">Loading...</div>
             
             <div class="confidence-meter">
                 <div class="confidence-header">
@@ -840,6 +865,11 @@
             </div>
         </div>
     </div>
+        <!-- Disclaimer -->
+        <div style="text-align: center; font-size: 15px; color: #888; margin-top: 40px;">
+            This application is for informational and educational purposes only and does not constitute financial advice. Past performance is not indicative of future results.
+        </div>
+
 
     
 </body>
@@ -870,15 +900,18 @@ let isLoading = false;
             const alertsDiv = document.getElementById('alerts');
             const alert = document.createElement('div');
             alert.className = `alert alert-${type}`;
-            alert.innerHTML = `<i class="fas fa-${type === 'success' ? 'check-circle' : type === 'warning' ? 'exclamation-triangle' : 'times-circle'}"></i> ${message}`;
-            
+            alert.innerHTML = `<i class="fas fa-${type === 'success' ? 'check-circle' : type === 'warning' ? 'exclamation-triangle' : 'times-circle'}"></i> ${message} <button class="close-btn">&times;</button>`;            
             alertsDiv.appendChild(alert);
+            // Fechar ao clicar no X
+            alert.querySelector('.close-btn').addEventListener('click', () => {
+                alert.remove();
+            });
             
             setTimeout(() => {
                 if (alert.parentNode) {
                     alert.remove();
                 }
-            }, 3000); // 3 segundos
+            }, 2000); // 2 segundos
         }
 
         async function makeApiCall(endpoint, method = 'POST', data = null) {
@@ -1204,7 +1237,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const directionEl = document.getElementById('predictionDirection');
                 const prediction = data.prediction || 'UNKNOWN';
                 directionEl.textContent = prediction;
-                directionEl.className = `prediction-direction ${(prediction === 'SUBIR') ? 'up' : 'down'}`;
+                directionEl.className = `prediction-direction ${(prediction === 'UP') ? 'up' : 'down'}`;
                 
                 // Update confidence
                 const confidence = Math.round((data.confidence || 0) * 100);

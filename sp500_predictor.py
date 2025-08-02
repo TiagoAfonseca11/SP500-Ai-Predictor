@@ -532,7 +532,7 @@ class EnhancedSP500Predictor:
                     regime_info = "Sideways Market"
             
             return {
-                'prediction': 'SUBIR' if prediction == 1 else 'DESCER',
+                'prediction': 'UP' if prediction == 1 else 'DOWN',
                 'probability_up': prob_up,
                 'probability_down': prob_down,
                 'confidence': confidence,
@@ -635,8 +635,8 @@ class EnhancedSP500Predictor:
             
             print(f"\n🎯 PREVISÃO PARA AMANHÃ:")
             print(f"📊 Direção: {result['prediction']}")
-            print(f"📈 Prob. SUBIR: {result['probability_up']:.1%}")
-            print(f"📉 Prob. DESCER: {result['probability_down']:.1%}")
+            print(f"📈 Prob. UP: {result['probability_up']:.1%}")
+            print(f"📉 Prob. DOWN: {result['probability_down']:.1%}")
             print(f"🎯 Confiança: {result['confidence']:.1%}")
             
             if result['market_regime']:

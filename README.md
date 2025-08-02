@@ -1,10 +1,16 @@
 # S&P 500 Market Direction Predictor
 
-A sophisticated machine learning application that predicts the next-day direction of the S&P 500 index using advanced ensemble methods and comprehensive market features.
+A machine learning application that predicts the next-day direction of the S&P 500 index using advanced ensemble methods and comprehensive market features.
 
 ## Overview
 
 This project implements an enhanced market prediction system that leverages multiple data sources and machine learning techniques to forecast S&P 500 movement direction. The system combines technical indicators, market sentiment features, volatility metrics, and regime detection to provide probabilistic predictions with confidence intervals.
+
+
+<div style="text-align:center;">
+  <img src="assets/pipeline.svg" alt="Descrição" height="500">
+</div>
+
 
 ## Features
 
@@ -29,7 +35,14 @@ This project implements an enhanced market prediction system that leverages mult
 - **Volume Analysis**: Trading activity and liquidity assessment
 - **Microstructure Features**: Gap analysis, true range, and price efficiency
 
-## Architecture
+## System Architecture
+
+
+### Pipeline
+
+   <div style="text-align:center;">
+   <img src="assets/technical.svg" alt="Descrição" >
+   </div>
 
 ### Core Components
 
