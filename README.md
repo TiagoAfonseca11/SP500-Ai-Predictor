@@ -73,7 +73,7 @@ templates/index.html # Web interface dashboard
 
 1. **Clone Repository**
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/TiagoAfonseca11/SP500-Ai-Predictor.git
    cd sp500-predictor
    ```
 
