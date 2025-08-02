@@ -432,6 +432,84 @@ def api_history():
             'success': False,
             'error': str(e)
         }), 500
+    
+# Adicionar este endpoint no app.py, junto com os outros endpoints existentes
+
+@app.route('/api/chart', methods=['POST'])
+def api_chart():
+    """API endpoint for chart data"""
+    try:
+        # Get parameters
+        request_data = request.get_json() or {}
+        period = request_data.get('period', '3mo')
+        
+        print(f"Loading chart data for period: {period}")
+        
+        # Download data based on period
+        period_mapping = {
+            '1mo': '1mo',
+            '3mo': '3mo', 
+            '6mo': '6mo',
+            '1y': '1y',
+            '2y': '2y'
+        }
+        
+        actual_period = period_mapping.get(period, '3mo')
+        data = predictor.download_data(period=actual_period)
+        
+        if data is None or data.empty:
+            return jsonify({
+                'success': False,
+                'error': 'Failed to download chart data'
+            }), 500
+        
+        # Prepare chart data
+        prices = data['Close'].tolist()
+        dates = [date.strftime('%Y-%m-%d') for date in data.index]
+        
+        # Calculate statistics
+        first_price = float(data['Close'].iloc[0])
+        last_price = float(data['Close'].iloc[-1])
+        period_return = (last_price - first_price) / first_price
+        
+        # Calculate volatility (annualized)
+        returns = data['Close'].pct_change().dropna()
+        volatility = float(returns.std() * (252 ** 0.5)) if len(returns) > 1 else 0
+        
+        max_price = float(data['Close'].max())
+        min_price = float(data['Close'].min())
+        
+        # Prepare response
+        chart_data = {
+            'prices': prices,
+            'dates': dates,
+            'stats': {
+                'period_return': period_return,
+                'volatility': volatility,
+                'max_price': max_price,
+                'min_price': min_price,
+                'first_price': first_price,
+                'last_price': last_price,
+                'data_points': len(prices)
+            },
+            'period': period,
+            'timestamp': datetime.now().isoformat()
+        }
+        
+        print(f"Chart data prepared: {len(prices)} points, return: {period_return:.2%}")
+        
+        return jsonify({
+            'success': True,
+            'data': chart_data
+        })
+        
+    except Exception as e:
+        print(f"Error in chart endpoint: {e}")
+        traceback.print_exc()
+        return jsonify({
+            'success': False,
+            'error': f'Chart data failed: {str(e)}'
+        }), 500
 
 def run_background_tasks():
     """Background tasks runner"""

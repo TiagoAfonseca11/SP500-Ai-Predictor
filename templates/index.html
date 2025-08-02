@@ -337,6 +337,158 @@
             cursor: not-allowed;
             transform: none;
         }
+        /* Chart Styles - Adicionar no final do CSS existente */
+
+.chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+}
+
+.chart-controls {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.chart-controls select {
+    padding: 8px 12px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-primary);
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.chart-controls select:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+.btn-chart-refresh {
+    padding: 8px 12px;
+    border: none;
+    border-radius: 8px;
+    background: rgba(59, 130, 246, 0.2);
+    color: var(--accent);
+    cursor: pointer;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-chart-refresh:hover {
+    background: rgba(59, 130, 246, 0.3);
+    transform: rotate(180deg);
+}
+
+.chart-container {
+    position: relative;
+    width: 100%;
+    height: 400px;
+    margin-bottom: 24px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    overflow: hidden;
+}
+
+.chart-container canvas {
+    width: 100%;
+    height: 100%;
+    border-radius: 12px;
+}
+
+.chart-loading {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    display: none;
+}
+
+.chart-loading.active {
+    display: block;
+}
+
+.spinner-small {
+    width: 32px;
+    height: 32px;
+    border: 3px solid rgba(255, 255, 255, 0.1);
+    border-top: 3px solid var(--accent);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 12px;
+}
+
+.chart-info {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 16px;
+}
+
+.chart-stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 12px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.03);
+    transition: var(--transition);
+}
+
+.chart-stat:hover {
+    background: rgba(255, 255, 255, 0.08);
+    transform: translateY(-2px);
+}
+
+.stat-label {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    margin-bottom: 4px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.stat-value {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.stat-value.positive {
+    color: var(--success);
+}
+
+.stat-value.negative {
+    color: var(--error);
+}
+
+/* Responsive adjustments for chart */
+@media (max-width: 768px) {
+    .chart-header {
+        flex-direction: column;
+        gap: 16px;
+        align-items: stretch;
+    }
+    
+    .chart-controls {
+        justify-content: center;
+    }
+    
+    .chart-container {
+        height: 300px;
+    }
+    
+    .chart-info {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
 
         /* Loading Indicator */
         .loading {
@@ -589,6 +741,48 @@
                 </div>
             </div>
         </div>
+        <!-- Price Chart Card -->
+<div class="card">
+    <div class="chart-header">
+        <h2><i class="fas fa-chart-candlestick"></i> S&P 500 Price Chart</h2>
+        <div class="chart-controls">
+            <select id="chartPeriod" onchange="loadChart()">
+                <option value="1mo">1 Month</option>
+                <option value="3mo" selected>3 Months</option>
+                <option value="6mo">6 Months</option>
+                <option value="1y">1 Year</option>
+            </select>
+            <button class="btn-chart-refresh" onclick="loadChart()">
+                <i class="fas fa-sync-alt"></i>
+            </button>
+        </div>
+    </div>
+    <div class="chart-container">
+        <canvas id="priceChart" width="400" height="200"></canvas>
+        <div class="chart-loading" id="chartLoading">
+            <div class="spinner-small"></div>
+            <p>Loading chart data...</p>
+        </div>
+    </div>
+    <div class="chart-info" id="chartInfo">
+        <div class="chart-stat">
+            <span class="stat-label">Period Return:</span>
+            <span class="stat-value" id="periodReturn">---%</span>
+        </div>
+        <div class="chart-stat">
+            <span class="stat-label">Volatility:</span>
+            <span class="stat-value" id="periodVolatility">---%</span>
+        </div>
+        <div class="chart-stat">
+            <span class="stat-label">Max Price:</span>
+            <span class="stat-value" id="maxPrice">$---.--</span>
+        </div>
+        <div class="chart-stat">
+            <span class="stat-label">Min Price:</span>
+            <span class="stat-value" id="minPrice">$---.--</span>
+        </div>
+    </div>
+</div>
 
         <!-- Control Panel -->
         <div class="controls">
@@ -740,6 +934,203 @@ let isLoading = false;
                 hideLoading();
             }
         }
+        // Chart functionality - Adicionar no final do JavaScript existente
+
+let priceChart = null;
+
+async function loadChart() {
+    const chartCanvas = document.getElementById('priceChart');
+    const chartLoading = document.getElementById('chartLoading');
+    const period = document.getElementById('chartPeriod').value;
+    
+    try {
+        // Show loading
+        chartLoading.classList.add('active');
+        
+        // Get chart data
+        const data = await makeApiCall('/api/chart', 'POST', { period: period });
+        
+        if (!data.success) {
+            throw new Error(data.error || 'Failed to load chart data');
+        }
+        
+        // Update chart
+        updateChart(data.data);
+        
+        // Update chart info
+        updateChartInfo(data.data);
+        
+    } catch (error) {
+        console.error('Chart loading error:', error);
+        showAlert(`Failed to load chart: ${error.message}`, 'error');
+    } finally {
+        chartLoading.classList.remove('active');
+    }
+}
+
+function updateChart(data) {
+    const canvas = document.getElementById('priceChart');
+    const ctx = canvas.getContext('2d');
+    
+    // Destroy existing chart
+    if (priceChart) {
+        priceChart.destroy();
+    }
+    
+    // Prepare data
+    const prices = data.prices || [];
+    const dates = data.dates || [];
+    const predictions = data.predictions || [];
+    
+    if (prices.length === 0) {
+        // Show no data message
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+        ctx.font = '16px Inter';
+        ctx.textAlign = 'center';
+        ctx.fillText('No chart data available', canvas.width / 2, canvas.height / 2);
+        return;
+    }
+    
+    // Create gradient
+    const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+    gradient.addColorStop(0, 'rgba(59, 130, 246, 0.3)');
+    gradient.addColorStop(1, 'rgba(59, 130, 246, 0.05)');
+    
+    // Chart configuration
+    const config = {
+        type: 'line',
+        data: {
+            labels: dates,
+            datasets: [{
+                label: 'S&P 500 Price',
+                data: prices,
+                borderColor: 'rgb(59, 130, 246)',
+                backgroundColor: gradient,
+                borderWidth: 2,
+                fill: true,
+                tension: 0.1,
+                pointRadius: 0,
+                pointHoverRadius: 6,
+                pointHoverBackgroundColor: 'rgb(59, 130, 246)',
+                pointHoverBorderColor: 'white',
+                pointHoverBorderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    mode: 'index',
+                    intersect: false,
+                    backgroundColor: 'rgba(30, 41, 59, 0.9)',
+                    titleColor: '#f8fafc',
+                    bodyColor: '#f8fafc',
+                    borderColor: 'rgba(255, 255, 255, 0.1)',
+                    borderWidth: 1,
+                    cornerRadius: 8,
+                    displayColors: false,
+                    callbacks: {
+                        title: function(context) {
+                            return context[0].label;
+                        },
+                        label: function(context) {
+                            return `Price: $${context.parsed.y.toFixed(2)}`;
+                        }
+                    }
+                }
+            },
+            interaction: {
+                mode: 'nearest',
+                axis: 'x',
+                intersect: false
+            },
+            scales: {
+                x: {
+                    display: true,
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.05)',
+                        drawBorder: false
+                    },
+                    ticks: {
+                        color: '#94a3b8',
+                        maxTicksLimit: 8
+                    }
+                },
+                y: {
+                    display: true,
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.05)',
+                        drawBorder: false
+                    },
+                    ticks: {
+                        color: '#94a3b8',
+                        callback: function(value) {
+                            return '$' + value.toFixed(0);
+                        }
+                    }
+                }
+            },
+            elements: {
+                point: {
+                    hoverRadius: 6
+                }
+            },
+            animation: {
+                duration: 1000,
+                easing: 'easeInOutQuart'
+            }
+        }
+    };
+    
+    // Create new chart
+    priceChart = new Chart(ctx, config);
+}
+
+function updateChartInfo(data) {
+    try {
+        const stats = data.stats || {};
+        
+        // Period return
+        const periodReturn = stats.period_return || 0;
+        const returnEl = document.getElementById('periodReturn');
+        returnEl.textContent = `${(periodReturn * 100).toFixed(2)}%`;
+        returnEl.className = `stat-value ${periodReturn >= 0 ? 'positive' : 'negative'}`;
+        
+        // Volatility
+        const volatility = stats.volatility || 0;
+        document.getElementById('periodVolatility').textContent = `${(volatility * 100).toFixed(2)}%`;
+        
+        // Max/Min prices
+        const maxPrice = stats.max_price || 0;
+        const minPrice = stats.min_price || 0;
+        document.getElementById('maxPrice').textContent = `$${maxPrice.toFixed(2)}`;
+        document.getElementById('minPrice').textContent = `$${minPrice.toFixed(2)}`;
+        
+    } catch (error) {
+        console.error('Error updating chart info:', error);
+    }
+}
+
+// Auto-load chart when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    // Load Chart.js library
+    if (typeof Chart === 'undefined') {
+        const script = document.createElement('script');
+        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js';
+        script.onload = function() {
+            // Chart.js loaded, now load chart data
+            setTimeout(loadChart, 1000);
+        };
+        document.head.appendChild(script);
+    } else {
+        // Chart.js already available
+        setTimeout(loadChart, 1000);
+    }
+});
 
         async function runBacktest() {
             if (isLoading) return;

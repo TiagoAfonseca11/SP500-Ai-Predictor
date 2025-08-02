@@ -366,9 +366,9 @@ class EnhancedSP500Predictor:
             return np.array([0.5])
     
     def train_model(self, X, y):
-        """Treinar modelo avançado com ensemble"""
+
         if X is None or y is None:
-            print("Erro: Dados inválidos para treinamento")
+            print("Erro: Dados inválidos para treinar")
             return None
         
         print(f"Treinando modelo avançado com {len(X)} amostras e {len(self.features)} features...")
