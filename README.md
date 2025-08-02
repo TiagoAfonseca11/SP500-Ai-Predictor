@@ -103,8 +103,13 @@ pip install flask flask-cors yfinance pandas numpy scikit-learn joblib
 
 ### Web Interface
 1. Start the server: `python run_server.py`
-2. Open browser to `http://localhost:5000`
+2. Open browser to `http://localhost:5000` (In most machines it will open automatically)
 3. Use the dashboard to run predictions, backtests, and model training
+
+<div style="text-align:center;">
+  <img src="assets/dataflow.svg" alt="Descrição" height="500">
+</div>
+
 
 ### Command Line Interface
 ```bash
@@ -115,7 +120,7 @@ Choose from:
 - Comprehensive analysis with backtest  
 - Model training only
 
-### API Endpoints
+### REST API Endpoints
 
 #### Prediction
 ```bash
@@ -148,30 +153,31 @@ Returns system health and model information.
 ### Feature Categories
 
 **Technical Indicators**
-- Moving averages (5, 10, 20, 50 day)
-- RSI (Relative Strength Index)
-- MACD (Moving Average Convergence Divergence)
-- Bollinger Bands position
-- Momentum indicators (3, 7, 14 day)
+- **Moving averages (5, 10, 20, 50 day)** — *(average closing price over N days, shows trend direction)*
+- **RSI (Relative Strength Index)** — *(momentum oscillator showing overbought/oversold conditions)*
+- **MACD (Moving Average Convergence Divergence)** — *(tracks momentum by comparing two EMAs)*
+- **Bollinger Bands position** — *(relative price position within volatility bands)*
+- **Momentum indicators (3, 7, 14 day)** — *(rate of price change over short periods)*
 
 **Market Context**
-- VIX volatility ratio
-- Dollar Index changes
-- Treasury yield movements
-- Volume analysis
-- Price gaps and efficiency
+- **VIX volatility ratio** — *(“fear index” measuring expected market volatility)*
+- **Dollar Index changes** — *(strength of the US dollar vs major currencies)*
+- **Treasury yield movements** — *(interest rate trends from US government bonds)*
+- **Volume analysis** — *(trading activity indicating conviction behind moves)*
+- **Price gaps and efficiency** — *(abrupt price moves and how efficiently they are filled)*
 
 **Sentiment Features**
-- Intraday price action
-- Volume-price relationships
-- Fear and greed proxy indicators
-- Market regime classification
+- **Intraday price action** — *(patterns within daily trading range reflecting sentiment)*
+- **Volume-price relationships** — *(correlation between price moves and volume spikes)*
+- **Fear and greed proxy indicators** — *(custom metrics indicating extreme market sentiment)*
+- **Market regime classification** — *(categorizes market into bull, bear, or sideways phases)*
 
 **Microstructure**
-- True Range and Average True Range
-- Price efficiency ratios
-- Gap up/down analysis
-- Volatility regime detection
+- **True Range and Average True Range** — *(measures daily volatility including gaps)*
+- **Price efficiency ratios** — *(how smoothly price moves vs. noisy movements)*
+- **Gap up/down analysis** — *(studies open price gaps for bullish/bearish signals)*
+- **Volatility regime detection** — *(identifies if market is in low or high volatility state)*
+
 
 ### Machine Learning Approach
 
@@ -299,19 +305,11 @@ Enable detailed logging by setting `debug=True` in the application configuration
 
 This project is provided for educational and research purposes. Users are responsible for compliance with applicable financial regulations and risk management practices.
 
-## Support
 
-For technical issues, feature requests, or general questions:
-1. Check troubleshooting section above
-2. Review configuration options
-3. Examine log files for error details
-4. Test with minimal examples to isolate issues
 
 ## Version History
 
 **v1.0** - Initial release with basic prediction capability
-**v2.0** - Enhanced features, web interface, and backtesting
-**v3.0** - Advanced ensemble methods and market context integration
 
 ---
 
