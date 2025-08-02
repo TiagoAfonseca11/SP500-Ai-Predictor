@@ -1,0 +1,934 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>S&P 500 AI Predictor</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #0f172a;
+            --secondary: #1e293b;
+            --accent: #3b82f6;
+            --accent-secondary: #f43f5e;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --surface: #1e293b;
+            --surface-light: #334155;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --error: #ef4444;
+            --gradient-main: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #d946ef 100%);
+            --gradient-success: linear-gradient(135deg, #10b981 0%, #34d399 100%);
+            --gradient-danger: linear-gradient(135deg, #ef4444 0%, #f87171 100%);
+            --shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.1);
+            --shadow-light: 0 4px 6px -1px rgba(0, 0, 0, 0.2), 0 2px 4px -1px rgba(0, 0, 0, 0.1);
+            --border-radius: 16px;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background-color: var(--primary);
+            color: var(--text-primary);
+            line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1440px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+
+        /* Card */
+        .card {
+            background: rgba(30, 41, 59, 0.7);
+            -webkit-backdrop-filter: blur(10px);
+            backdrop-filter: blur(10px);
+            border-radius: var(--border-radius);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+            overflow: hidden;
+            position: relative;
+            padding: 24px;
+        }
+
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4);
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--gradient-main);
+        }
+
+        /* Header Section */
+        .header {
+            text-align: center;
+            margin-bottom: 48px;
+            position: relative;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 12px;
+            background: var(--gradient-main);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: fadeInUp 0.6s ease;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+            max-width: 600px;
+            margin: 0 auto 20px;
+            animation: fadeInUp 0.6s ease 0.1s both;
+        }
+
+        .status-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            border-radius: 9999px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+            animation: fadeInUp 0.6s ease 0.2s both;
+        }
+
+        .pulse {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: currentColor;
+            animation: pulse 2s infinite;
+        }
+
+        /* Dashboard Layout */
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 24px;
+            margin-bottom: 32px;
+            
+        }
+        .container > *:not(:last-child) {
+            margin-bottom: 3rem;
+        }
+        /* Prediction Card */
+        .prediction-card {
+            grid-column: span 2;
+            text-align: center;
+            padding: 32px;
+        }
+
+        .prediction-direction {
+            font-size: 4.5rem;
+            font-weight: 800;
+            margin: 24px 0;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            position: relative;
+            display: inline-block;
+        }
+
+        .prediction-direction.up {
+            background: var(--gradient-success);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .prediction-direction.down {
+            background: var(--gradient-danger);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        /* Confidence Meter */
+        .confidence-meter {
+            margin: 32px 0;
+        }
+
+        .confidence-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .confidence-bar {
+            width: 100%;
+            height: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        .confidence-fill {
+            height: 100%;
+            border-radius: 6px;
+            transition: width 0.8s ease;
+            background: var(--gradient-main);
+        }
+
+        /* Probability Indicators */
+        .probability-indicators {
+            display: flex;
+            justify-content: center;
+            gap: 24px;
+            margin-top: 24px;
+        }
+
+        .probability-indicator {
+            flex: 1;
+            max-width: 190px;
+            padding: 20px;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.03);
+            transition: var(--transition);
+        }
+
+        .probability-indicator:hover {
+            background: rgba(255, 255, 255, 0.08);
+            transform: translateY(-4px);
+        }
+
+        .probability-value {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .probability-label {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Market Context */
+        .market-context {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 16px;
+            margin-top: 24px;
+        }
+
+        .market-metric {
+            padding: 16px;
+            border-radius: 12px;
+            background: rgba(30, 41, 59, 0.7); /* Fundo mais opaco */
+            border: 1px solid rgba(255, 255, 255, 0.1); /* Borda sutil */
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Sombra para profundidade */
+            transition: var(--transition);
+            text-align: center;
+            backdrop-filter: blur(5px); /* Efeito glass opcional */
+            -webkit-backdrop-filter: blur(5px);
+        }
+
+        /* Versão alternativa sem glass effect: */
+        /* .market-metric {
+            background: var(--surface-light); 
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        } */
+
+        .market-metric:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateY(-4px);
+            border-color: rgba(255, 255, 255, 0.2);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .market-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 4px;
+            color: var(--accent); /* Ou manter var(--text-primary) */
+        }
+
+        .market-label {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Controls */
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+
+        .btn {
+            padding: 16px 24px;
+            border: none;
+            border-radius: 12px;
+            font-size: 0.9375rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            position: relative;
+            overflow: hidden;
+            z-index: 1;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0) 100%);
+            z-index: -1;
+            opacity: 0;
+            transition: var(--transition);
+        }
+
+        .btn:hover::before {
+            opacity: 1;
+        }
+
+        .btn-primary {
+            background: var(--gradient-main);
+            color: white;
+        }
+
+        .btn-success {
+            background: var(--gradient-success);
+            color: white;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-light);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Loading Indicator */
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 40px;
+        }
+
+        .spinner {
+            width: 48px;
+            height: 48px;
+            border: 4px solid rgba(255, 255, 255, 0.1);
+            border-top: 4px solid var(--accent);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        /* Feature Importance */
+        .feature-importance {
+            margin-top: 24px;
+        }
+
+        .feature-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .feature-name {
+            flex: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            padding-right: 16px;
+        }
+
+        .feature-bar-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            width: 60%;
+        }
+
+        .feature-value {
+            width: 40px;
+            text-align: right;
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        .feature-bar {
+            flex: 1;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .feature-bar-fill {
+            height: 100%;
+            border-radius: 3px;
+            background: var(--gradient-main);
+            transition: width 0.8s ease;
+        }
+
+        /* Backtest Results */
+        .backtest-results {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 16px;
+            margin-top: 24px;
+        }
+
+        .backtest-metric {
+            padding: 16px;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.03);
+            transition: var(--transition);
+            text-align: center;
+        }
+
+        .backtest-metric:hover {
+            background: rgba(255, 255, 255, 0.08);
+            transform: translateY(-4px);
+        }
+
+        .backtest-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .backtest-label {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Alerts */
+         
+        #alerts {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+            width: 100%;
+            max-width: 600px;
+        }
+
+        .alert {
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            animation: slideInDown 0.3s ease;
+            background: hsla(119, 94%, 28%, 0.949);
+            border-left: 4px solid;
+            box-shadow: var(--shadow-light);
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+        }
+
+        
+
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Responsive Adjustments */
+        @media (max-width: 1024px) {
+            .prediction-card {
+                grid-column: span 1;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .prediction-direction {
+                font-size: 3rem;
+            }
+            
+            .probability-indicators {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .probability-indicator {
+                max-width: 100%;
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>S&P 500 AI Predictor</h1>
+            <p>Leveraging advanced machine learning to forecast market movements with unprecedented accuracy</p>
+            <div class="status-indicator">
+                <div class="pulse"></div>
+                <span>AI System Online</span>
+            </div>
+        </div>
+
+        <!-- Main Prediction Card -->
+        <div class="card prediction-card">
+            <h2><i class="fas fa-chart-line"></i> Tomorrow's Market Prediction</h2>
+            <div class="prediction-direction" id="predictionDirection">LOADING...</div>
+            
+            <div class="confidence-meter">
+                <div class="confidence-header">
+                    <span>Model Confidence</span>
+                    <span id="confidenceValue">---%</span>
+                </div>
+                <div class="confidence-bar">
+                    <div class="confidence-fill" id="confidenceFill" style="width: 0%"></div>
+                </div>
+            </div>
+
+            <div class="probability-indicators">
+                <div class="probability-indicator">
+                    <div class="probability-value" id="probUp">--%</div>
+                    <div class="probability-label">Probability Up</div>
+                </div>
+                <div class="probability-indicator">
+                    <div class="probability-value" id="probDown">--%</div>
+                    <div class="probability-label">Probability Down</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Market Context Card -->
+        <div class="card">
+            <h2><i class="fas fa-globe"></i> Market Context</h2>
+            <div class="market-context">
+                <div class="market-metric">
+                    <div class="market-value" id="lastPrice">$---.--</div>
+                    <div class="market-label">Last Close</div>
+                </div>
+                <div class="market-metric">
+                    <div class="market-value" id="marketRegime">---</div>
+                    <div class="market-label">Market Regime</div>
+                </div>
+                <div class="market-metric">
+                    <div class="market-value" id="vixLevel">--</div>
+                    <div class="market-label">VIX Level</div>
+                </div>
+                <div class="market-metric">
+                    <div class="market-value" id="trendStrength">---</div>
+                    <div class="market-label">Trend Strength</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Control Panel -->
+        <div class="controls">
+            <button class="btn btn-primary" onclick="runPrediction()">
+                <i class="fas fa-bolt"></i> Run Prediction
+            </button>
+            <button class="btn btn-success" onclick="runBacktest()">
+                <i class="fas fa-chart-bar"></i> Run Backtest
+            </button>
+            <button class="btn btn-primary" onclick="trainModel()">
+                <i class="fas fa-cogs"></i> Train Model
+            </button>
+            <button class="btn btn-success" onclick="refreshData()">
+                <i class="fas fa-sync-alt"></i> Refresh Data
+            </button>
+        </div>
+
+        <!-- Loading Indicator -->
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Processing AI Analysis...</p>
+        </div>
+
+        <!-- Alerts Container -->
+        <div id="alerts"></div>
+
+        <!-- Feature Importance Card -->
+        <div class="card">
+            <h2><i class="fas fa-lightbulb"></i> Key Predictive Features</h2>
+            <div class="feature-importance" id="featureImportance">
+                <p style="text-align: center; color: var(--text-secondary);">Run a prediction to see which factors are driving the model's decision</p>
+            </div>
+        </div>
+
+        <!-- Performance Metrics Card -->
+        <div class="card">
+            <h2><i class="fas fa-trophy"></i> Model Performance</h2>
+            <div class="backtest-results" id="backtestResults">
+                <div class="backtest-metric">
+                    <div class="backtest-value" id="winRate">--%</div>
+                    <div class="backtest-label">Win Rate</div>
+                </div>
+                <div class="backtest-metric">
+                    <div class="backtest-value" id="strategyReturn">--%</div>
+                    <div class="backtest-label">Strategy Return</div>
+                </div>
+                <div class="backtest-metric">
+                    <div class="backtest-value" id="sharpeRatio">--</div>
+                    <div class="backtest-label">Sharpe Ratio</div>
+                </div>
+                <div class="backtest-metric">
+                    <div class="backtest-value" id="maxDrawdown">--%</div>
+                    <div class="backtest-label">Max Drawdown</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    
+</body>
+
+<script>
+let isLoading = false;
+        let debugMode = false; // Set to true for debugging
+
+        function log(message, data = null) {
+            if (debugMode) {
+                console.log(message, data);
+            }
+        }
+
+        function showLoading() {
+            isLoading = true;
+            document.getElementById('loading').style.display = 'block';
+            document.querySelectorAll('.btn').forEach(btn => btn.disabled = true);
+        }
+
+        function hideLoading() {
+            isLoading = false;
+            document.getElementById('loading').style.display = 'none';
+            document.querySelectorAll('.btn').forEach(btn => btn.disabled = false);
+        }
+
+        function showAlert(message, type = 'success') {
+            const alertsDiv = document.getElementById('alerts');
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type}`;
+            alert.innerHTML = `<i class="fas fa-${type === 'success' ? 'check-circle' : type === 'warning' ? 'exclamation-triangle' : 'times-circle'}"></i> ${message}`;
+            
+            alertsDiv.appendChild(alert);
+            
+            setTimeout(() => {
+                if (alert.parentNode) {
+                    alert.remove();
+                }
+            }, 3000); // 3 segundos
+        }
+
+        async function makeApiCall(endpoint, method = 'POST', data = null) {
+            try {
+                const options = {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                };
+                
+                if (data && method !== 'GET') {
+                    options.body = JSON.stringify(data);
+                }
+                
+                log(`Making API call to ${endpoint}`, data);
+                
+                const response = await fetch(endpoint, options);
+                const responseData = await response.json();
+                
+                log(`API response from ${endpoint}:`, responseData);
+                
+                if (!response.ok) {
+                    throw new Error(responseData.error || `HTTP error! status: ${response.status}`);
+                }
+                
+                return responseData;
+                
+            } catch (error) {
+                log(`API error for ${endpoint}:`, error);
+                throw error;
+            }
+        }
+
+        async function runPrediction() {
+            if (isLoading) return;
+            
+            showLoading();
+            try {
+                const data = await makeApiCall('/api/predict');
+                
+                if (data.success && data.data) {
+                    updatePredictionDisplay(data.data);
+                    showAlert('Prediction completed successfully!');
+                } else {
+                    throw new Error(data.error || 'Invalid response data');
+                }
+                
+            } catch (error) {
+                console.error('Prediction error:', error);
+                showAlert(`Failed to run prediction: ${error.message}`, 'error');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        async function runBacktest() {
+            if (isLoading) return;
+            
+            showLoading();
+            try {
+                const data = await makeApiCall('/api/backtest', 'POST', { days_back: 730 });
+                
+                if (data.success && data.data) {
+                    updateBacktestDisplay(data.data);
+                    showAlert('Backtest completed successfully!');
+                } else {
+                    throw new Error(data.error || 'Invalid backtest response');
+                }
+                
+            } catch (error) {
+                console.error('Backtest error:', error);
+                showAlert(`Failed to run backtest: ${error.message}`, 'error');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        async function trainModel() {
+            if (isLoading) return;
+            
+            showLoading();
+            try {
+                const data = await makeApiCall('/api/train');
+                
+                if (data.success) {
+                    showAlert(`Model trained successfully! Features: ${data.features_count}, Data points: ${data.data_points}`);
+                } else {
+                    throw new Error(data.error || 'Training failed');
+                }
+                
+            } catch (error) {
+                console.error('Training error:', error);
+                showAlert(`Failed to train model: ${error.message}`, 'error');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        async function refreshData() {
+            if (isLoading) return;
+            
+            showLoading();
+            try {
+                const data = await makeApiCall('/api/refresh');
+                
+                if (data.success) {
+                    showAlert(`Data refreshed successfully! Latest: ${data.latest_date} - ${data.latest_price?.toFixed(2)}`);
+                } else {
+                    throw new Error(data.error || 'Refresh failed');
+                }
+                
+            } catch (error) {
+                console.error('Refresh error:', error);
+                showAlert(`Failed to refresh data: ${error.message}`, 'error');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        function updatePredictionDisplay(data) {
+            log('Updating prediction display:', data);
+            
+            try {
+                // Update prediction direction
+                const directionEl = document.getElementById('predictionDirection');
+                const prediction = data.prediction || 'UNKNOWN';
+                directionEl.textContent = prediction;
+                directionEl.className = `prediction-direction ${(prediction === 'SUBIR') ? 'up' : 'down'}`;
+                
+                // Update confidence
+                const confidence = Math.round((data.confidence || 0) * 100);
+                document.getElementById('confidenceValue').textContent = `${confidence}%`;
+                document.getElementById('confidenceFill').style.width = `${confidence}%`;
+                
+                // Update probabilities
+                document.getElementById('probUp').textContent = `${Math.round((data.probability_up || 0) * 100)}%`;
+                document.getElementById('probDown').textContent = `${Math.round((data.probability_down || 0) * 100)}%`;
+                
+                // Update market context
+                document.getElementById('lastPrice').textContent = data.last_price ? `${data.last_price.toFixed(2)}` : 'N/A';
+                document.getElementById('marketRegime').textContent = data.market_regime || 'N/A';
+                document.getElementById('vixLevel').textContent = data.vix_level ? data.vix_level.toFixed(1) : 'N/A';
+                
+                // Update trend strength
+                const trendStrength = data.trend_strength;
+                let trendText = 'N/A';
+                if (trendStrength !== null && trendStrength !== undefined) {
+                    const strength = Math.abs(trendStrength);
+                    const direction = trendStrength > 0 ? 'Up' : 'Down';
+                    const level = strength > 0.7 ? 'Strong' : strength > 0.3 ? 'Moderate' : 'Weak';
+                    trendText = `${level} ${direction}`;
+                }
+                document.getElementById('trendStrength').textContent = trendText;
+                
+                // Update feature importance if available
+                if (data.feature_importance && data.feature_importance.length > 0) {
+                    updateFeatureImportance(data.feature_importance);
+                }
+                
+            } catch (error) {
+                console.error('Error updating prediction display:', error);
+                showAlert('Error updating display', 'warning');
+            }
+        }
+
+        function updateFeatureImportance(features) {
+            log('Updating feature importance:', features);
+            
+            try {
+                const container = document.getElementById('featureImportance');
+                container.innerHTML = '';
+                
+                if (!features || features.length === 0) {
+                    container.innerHTML = '<p style="text-align: center; color: var(--text-secondary);">No feature importance data available</p>';
+                    return;
+                }
+                
+                features.slice(0, 10).forEach(feature => {
+                    const item = document.createElement('div');
+                    item.className = 'feature-item';
+                    const importance = (feature.importance || 0) * 100;
+                    item.innerHTML = `
+                        <div class="feature-name">${feature.name || 'Unknown'}</div>
+                        <div class="feature-bar-container">
+                            <div class="feature-bar">
+                                <div class="feature-bar-fill" style="width: ${importance}%"></div>
+                            </div>
+                            <div class="feature-value">${importance.toFixed(1)}%</div>
+                        </div>
+                    `;
+                    container.appendChild(item);
+                });
+                
+            } catch (error) {
+                console.error('Error updating feature importance:', error);
+            }
+        }
+
+        function updateBacktestDisplay(data) {
+            log('Updating backtest display:', data);
+            
+            try {
+                document.getElementById('winRate').textContent = data.win_rate ? `${Math.round(data.win_rate * 100)}%` : 'N/A';
+                document.getElementById('strategyReturn').textContent = data.strategy_return ? `${Math.round(data.strategy_return * 100)}%` : 'N/A';
+                document.getElementById('sharpeRatio').textContent = data.strategy_sharpe ? data.strategy_sharpe.toFixed(2) : 'N/A';
+                document.getElementById('maxDrawdown').textContent = data.strategy_mdd ? `${Math.round(Math.abs(data.strategy_mdd) * 100)}%` : 'N/A';
+                
+            } catch (error) {
+                console.error('Error updating backtest display:', error);
+                showAlert('Error updating backtest display', 'warning');
+            }
+        }
+
+        // Initialize with status check
+        document.addEventListener('DOMContentLoaded', async function() {
+            showAlert('S&P 500 AI Predictor loaded successfully!', 'success');
+            
+            // Check system status
+            try {
+                const status = await makeApiCall('/api/status', 'GET');
+                if (status.success) {
+                    const statusInfo = status.status;
+                    if (statusInfo.latest_price) {
+                        document.getElementById('lastPrice').textContent = `${statusInfo.latest_price.toFixed(2)}`;
+                    }
+                    
+                    if (statusInfo.model_trained) {
+                        showAlert('Model ready for predictions', 'success');
+                    } else {
+                        showAlert('No trained model found. Please train a model first.', 'warning');
+                    }
+                }
+            } catch (error) {
+                console.error('Status check failed:', error);
+                showAlert('System status check failed', 'warning');
+            }
+        });
+
+        // Auto-refresh every 5 minutes (disabled by default to prevent spam)
+        // setInterval(() => {
+        //     if (!isLoading) {
+        //         refreshData();
+        //     }
+        // }, 300000);
+        </script>
+</html>
