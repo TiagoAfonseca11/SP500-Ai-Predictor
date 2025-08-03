@@ -433,7 +433,7 @@ def api_history():
             'error': str(e)
         }), 500
     
-# Adicionar este endpoint no app.py, junto com os outros endpoints existentes
+# Add this endpoint in app.py, along with the other existing endpoints
 
 @app.route('/api/chart', methods=['POST'])
 def api_chart():

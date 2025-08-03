@@ -2,6 +2,19 @@
 
 A machine learning application that predicts the next-day direction of the S&P 500 index using advanced ensemble methods and comprehensive market features.
 
+## Contents Index
+
+- [Overview](#overview)
+- [Installation](#installation)
+- [Quick Start](#quick-start)
+- [Features](#features)
+- [Usage](docs/usage.md)
+- [API Reference](docs/api.md)
+- [Model Details](docs/model.md)
+- [Performance Metrics](docs/performance.md)
+- [Testing](#testing)
+- [Contributing](#contributing)
+
 ## Overview
 
 This project implements an enhanced market prediction system that leverages multiple data sources and machine learning techniques to forecast S&P 500 movement direction. The system combines technical indicators, market sentiment features, volatility metrics, and regime detection to provide probabilistic predictions with confidence intervals.
@@ -71,10 +84,15 @@ This project uses a layered testing strategy to ensure stability and correctness
 - **Acceptance Tests**: Simulate end-to-end user scenarios (`Tests/test_acceptance.py`)
 - **Benchmark Tests**:  Measure the performance and efficiency of the system under typical and peak conditions (`Tests/benchmark_tester.py`)
 
-   - API layer: 100% passed
-   - Unit layer: 96.7% passed
-   - Acceptance: 72.2% passed
-   - Benchmark: 83.3% passed
+   
+    
+      | Test Type      | Coverage | Pass Rate 
+      |----------------|----------|----------  
+      | Unit Tests     | 98%      | 96.7%   
+      | API Tests      | 100%     | 100.0% 
+      | Acceptance     | 72.2%    | 73.0%  
+      | Benchmark      | 83.3%    | 83.3%  
+
 
  *Most tests passed. Minor issues remain and are under review.*
 

@@ -21,13 +21,13 @@ class EnhancedSP500Predictor:
         self.results_df = None
         
     def download_data(self, period="5y"):
-        """Download dados históricos do S&P 500"""
+        """Download S&P 500 historical data"""
         try:
-            print(f"Baixando dados do S&P 500 ({period})...")
+            print(f"Downloading S&P 500 data ({period})...")
             data = yf.download(self.symbol, period=period, interval="1d")
             
             if data.empty:
-                print("Erro: Nenhum dado foi baixado")
+                print("Error: No data was downloaded")
                 return None
             
             if isinstance(data.columns, pd.MultiIndex):
@@ -37,45 +37,45 @@ class EnhancedSP500Predictor:
             missing_cols = [col for col in required_cols if col not in data.columns]
             
             if missing_cols:
-                print(f"Erro: Colunas ausentes: {missing_cols}")
+                print(f"Error: Missing columns: {missing_cols}")
                 return None
             
-            print(f"Dados baixados: {len(data)} dias")
+            print(f"Data downloaded: {len(data)} days")
             return data
             
         except Exception as e:
-            print(f"Erro ao baixar dados: {e}")
+            print(f"Error downloading data: {e}")
             return None
     
     def add_market_context_features(self, df):
-        """Adicionar contexto de mercado mais amplo"""
+        """Add broader market context features"""
         try:
-            print("Adicionando features de contexto de mercado...")
+            print("Adding market context features...")
             
-            # VIX - Índice de volatilidade
+            # VIX - Volatility Index
             try:
                 vix = yf.download("^VIX", start=df.index[0], end=df.index[-1], progress=False)['Close']
                 df['vix'] = vix.reindex(df.index, method='ffill')
                 df['vix_ma'] = df['vix'].rolling(20, min_periods=1).mean()
                 df['vix_ratio'] = df['vix'] / df['vix_ma']
                 df['vix_ratio'] = df['vix_ratio'].fillna(1.0)
-                print("✓ VIX features adicionadas")
+                print("✓ VIX features added")
             except:
-                print("⚠ VIX não disponível, usando volatilidade local")
+                print("⚠ VIX not available, using local volatility")
                 df['vix'] = df['Close'].rolling(20).std() * np.sqrt(252) * 100
                 df['vix_ma'] = df['vix'].rolling(20, min_periods=1).mean()
                 df['vix_ratio'] = df['vix'] / df['vix_ma']
                 df['vix_ratio'] = df['vix_ratio'].fillna(1.0)
             
-            # Dollar Index (DXY) - proxy usando USD/EUR se não disponível
+            # Dollar Index (DXY) - using USD/EUR proxy if not available
             try:
                 dxy = yf.download("DX-Y.NYB", start=df.index[0], end=df.index[-1], progress=False)['Close']
                 df['dxy'] = dxy.reindex(df.index, method='ffill')
                 df['dxy_change'] = df['dxy'].pct_change().fillna(0)
-                print("✓ DXY features adicionadas")
+                print("✓ DXY features added")
             except:
-                print("⚠ DXY não disponível, usando proxy")
-                df['dxy'] = 100  # Valor neutro
+                print("⚠ DXY not available, using proxy")
+                df['dxy'] = 100  # Neutral value
                 df['dxy_change'] = 0
             
             # Treasury yields (^TNX)
@@ -83,21 +83,21 @@ class EnhancedSP500Predictor:
                 tnx = yf.download("^TNX", start=df.index[0], end=df.index[-1], progress=False)['Close']
                 df['tnx'] = tnx.reindex(df.index, method='ffill')
                 df['tnx_change'] = df['tnx'].pct_change().fillna(0)
-                print("✓ Treasury yields features adicionadas")
+                print("✓ Treasury yields features added")
             except:
-                print("⚠ TNX não disponível, usando proxy")
-                df['tnx'] = 2.0  # Valor neutro
+                print("⚠ TNX not available, using proxy")
+                df['tnx'] = 2.0  # Neutral value
                 df['tnx_change'] = 0
                 
         except Exception as e:
-            print(f"Erro ao adicionar features de mercado: {e}")
+            print(f"Error adding market features: {e}")
             
         return df
     
     def add_sentiment_features(self, df):
-        """Features baseadas em sentiment"""
+        """Sentiment-based features"""
         try:
-            print("Adicionando features de sentiment...")
+            print("Adding sentiment features...")
             
             # Intraday sentiment
             df['open_close_ratio'] = (df['Close'] - df['Open']) / df['Open']
@@ -119,31 +119,31 @@ class EnhancedSP500Predictor:
                 volume_component * 0.4
             )
             
-            # Preencher NaN
+            # Fill NaN values
             sentiment_cols = ['open_close_ratio', 'high_close_ratio', 'low_close_ratio', 
                             'price_volume_trend', 'fear_greed_proxy']
             for col in sentiment_cols:
                 if col in df.columns:
                     df[col] = df[col].fillna(0)
             
-            print("✓ Features de sentiment adicionadas")
+            print("✓ Sentiment features added")
             
         except Exception as e:
-            print(f"Erro ao adicionar features de sentiment: {e}")
+            print(f"Error adding sentiment features: {e}")
             
         return df
     
     def add_microstructure_features(self, df):
-        """Features de microestrutura do mercado"""
+        """Market microstructure features"""
         try:
-            print("Adicionando features de microestrutura...")
+            print("Adding microstructure features...")
             
             # Gaps
             prev_close = df['Close'].shift(1)
             df['gap_up'] = ((df['Open'] - prev_close) / prev_close).clip(lower=0).fillna(0)
             df['gap_down'] = ((prev_close - df['Open']) / prev_close).clip(lower=0).fillna(0)
             
-            # True Range e Average True Range
+            # True Range and Average True Range
             high_low = df['High'] - df['Low']
             high_prev_close = abs(df['High'] - prev_close)
             low_prev_close = abs(df['Low'] - prev_close)
@@ -159,17 +159,17 @@ class EnhancedSP500Predictor:
             df['efficiency_ratio'] = close_change_10 / tr_sum_10
             df['efficiency_ratio'] = df['efficiency_ratio'].replace([np.inf, -np.inf], 0.5).fillna(0.5)
             
-            print("✓ Features de microestrutura adicionadas")
+            print("✓ Microstructure features added")
             
         except Exception as e:
-            print(f"Erro ao adicionar features de microestrutura: {e}")
+            print(f"Error adding microstructure features: {e}")
             
         return df
     
     def add_regime_features(self, df):
-        """Detectar regimes de mercado"""
+        """Detect market regimes"""
         try:
-            print("Adicionando features de regime de mercado...")
+            print("Adding market regime features...")
             
             # Trend strength
             def trend_strength(prices):
@@ -200,25 +200,25 @@ class EnhancedSP500Predictor:
             df['high_vol_regime'] = (vol_20 > vol_60 * 1.5).astype(int)
             df['high_vol_regime'] = df['high_vol_regime'].fillna(0)
             
-            print("✓ Features de regime de mercado adicionadas")
+            print("✓ Market regime features added")
             
         except Exception as e:
-            print(f"Erro ao adicionar features de regime: {e}")
+            print(f"Error adding regime features: {e}")
             
         return df
     
     def create_features(self, data):
-        """Criar features técnicas avançadas para o modelo"""
+        """Create advanced technical features for the model"""
         df = data.copy()
         
         if len(df) < 200:
-            print("Erro: Dados insuficientes para criar features avançadas")
+            print("Error: Insufficient data to create advanced features")
             return None
         
         try:
-            print("Criando features básicas...")
+            print("Creating basic features...")
             
-            # Features básicas
+            # Basic features
             df['returns'] = df['Close'].pct_change()
             df['high_low_pct'] = (df['High'] - df['Low']) / df['Close']
             
@@ -227,7 +227,7 @@ class EnhancedSP500Predictor:
             df['volume_ratio'] = df['Volume'] / df['volume_ma']
             df['volume_ratio'] = df['volume_ratio'].replace([np.inf, -np.inf], np.nan).fillna(1.0)
             
-            # Médias móveis básicas
+            # Basic moving averages
             for window in [5, 10, 20, 50]:
                 df[f'ma_{window}'] = df['Close'].rolling(window=window, min_periods=1).mean()
                 df[f'ma_{window}_ratio'] = df['Close'] / df[f'ma_{window}']
@@ -263,88 +263,88 @@ class EnhancedSP500Predictor:
             df['bb_position'] = (df['Close'] - df['bb_lower']) / bb_range
             df['bb_position'] = df['bb_position'].clip(0, 1)
             
-            # Volatilidade
+            # Volatility
             df['volatility'] = df['returns'].rolling(window=20, min_periods=1).std()
             df['volatility'] = df['volatility'].fillna(df['volatility'].mean())
             
-            # Features de momentum
+            # Momentum features
             for window in [3, 7, 14]:
                 df[f'momentum_{window}'] = df['Close'].pct_change(window).fillna(0)
             
-            print("✓ Features básicas criadas")
+            print("✓ Basic features created")
             
-            # Adicionar features avançadas
+            # Add advanced features
             df = self.add_market_context_features(df)
             df = self.add_sentiment_features(df)
             df = self.add_microstructure_features(df)
             df = self.add_regime_features(df)
             
-            # Variável target
+            # Target variable
             df['target'] = (df['Close'].shift(-1) > df['Close']).astype(int)
             
-            # Limpar dados
+            # Clean data
             df = df.dropna()
             
             if len(df) < 100:
-                print("Erro: Dados insuficientes após limpeza")
+                print("Error: Insufficient data after cleaning")
                 return None
             
-            print(f"✅ Features criadas: {len(df)} amostras com {len(df.columns)} colunas")
+            print(f"✅ Features created: {len(df)} samples with {len(df.columns)} columns")
             return df
             
         except Exception as e:
-            print(f"Erro ao criar features: {e}")
+            print(f"Error creating features: {e}")
             return None
     
     def prepare_data(self, df):
-        """Preparar dados para treinamento"""
+        """Prepare data for training"""
         if df is None:
             return None, None
         
-        # Lista expandida de features
+        # Expanded feature list
         feature_cols = [
-            # Features básicas
+            # Basic features
             'returns', 'high_low_pct', 'volume_ratio',
             'ma_5_ratio', 'ma_10_ratio', 'ma_20_ratio', 'ma_50_ratio',
             'rsi', 'macd', 'macd_signal', 'macd_histogram',
             'bb_position', 'volatility',
             'momentum_3', 'momentum_7', 'momentum_14',
             
-            # Features de mercado
+            # Market features
             'vix_ratio', 'dxy_change', 'tnx_change',
             
-            # Features de sentiment
+            # Sentiment features
             'open_close_ratio', 'high_close_ratio', 'low_close_ratio',
             'price_volume_trend', 'fear_greed_proxy',
             
-            # Features de microestrutura
+            # Microstructure features
             'gap_up', 'gap_down', 'atr_ratio', 'efficiency_ratio',
             
-            # Features de regime
+            # Regime features
             'trend_strength', 'bull_market', 'bear_market', 'sideways_market', 'high_vol_regime'
         ]
         
-        # Filtrar apenas features que existem
+        # Filter only existing features
         available_features = [col for col in feature_cols if col in df.columns]
         self.features = available_features
         
-        print(f"Features disponíveis: {len(available_features)}")
+        print(f"Available features: {len(available_features)}")
         
         X = df[available_features]
         y = df['target']
         
-        # Remover última linha (não tem target)
+        # Remove last row (no target)
         X = X[:-1]
         y = y[:-1]
         
         if len(X) < 50:
-            print("Erro: Dados insuficientes para treinamento")
+            print("Error: Insufficient data for training")
             return None, None
         
         return X, y
     
     def time_series_validation(self, X, y, model):
-        """Validação respeitando série temporal"""
+        """Validation respecting time series"""
         try:
             tscv = TimeSeriesSplit(n_splits=5)
             scores = []
@@ -362,35 +362,35 @@ class EnhancedSP500Predictor:
             
             return np.array(scores)
         except Exception as e:
-            print(f"Erro na validação temporal: {e}")
+            print(f"Error in temporal validation: {e}")
             return np.array([0.5])
     
     def train_model(self, X, y):
 
         if X is None or y is None:
-            print("Erro: Dados inválidos para treinar")
+            print("Error: Invalid data for training")
             return None
         
-        print(f"Treinando modelo avançado com {len(X)} amostras e {len(self.features)} features...")
+        print(f"Training advanced model with {len(X)} samples and {len(self.features)} features...")
         
         try:
             
 
-            # Dividir dados
+            # Split data
             test_size = min(0.2, max(0.1, 50 / len(X)))
             X_train, X_test, y_train, y_test = train_test_split(
                 X, y, test_size=test_size, random_state=42, stratify=y
             )
 
-            # Corrigir valores inválidos
+            # Fix invalid values
             X_train = X_train.replace([np.inf, -np.inf], np.nan).fillna(0)
             X_test = X_test.replace([np.inf, -np.inf], np.nan).fillna(0)
             
-            # Normalizar features
+            # Normalize features
             X_train_scaled = self.scaler.fit_transform(X_train)
             X_test_scaled = self.scaler.transform(X_test)
             
-            # Modelos individuais com hiperparâmetros otimizados
+            # Individual models with optimized hyperparameters
             rf_model = RandomForestClassifier(
                 n_estimators=150,
                 max_depth=12,
@@ -416,17 +416,17 @@ class EnhancedSP500Predictor:
                 voting='soft'
             )
             
-            # Treinar modelos
-            print("Treinando Random Forest...")
+            # Train models
+            print("Training Random Forest...")
             rf_model.fit(X_train_scaled, y_train)
             
-            print("Treinando Gradient Boosting...")
+            print("Training Gradient Boosting...")
             gb_model.fit(X_train_scaled, y_train)
             
-            print("Treinando Ensemble...")
+            print("Training Ensemble...")
             ensemble_model.fit(X_train_scaled, y_train)
             
-            # Avaliar modelos
+            # Evaluate models
             rf_score = accuracy_score(y_test, rf_model.predict(X_test_scaled))
             gb_score = accuracy_score(y_test, gb_model.predict(X_test_scaled))
             ensemble_score = accuracy_score(y_test, ensemble_model.predict(X_test_scaled))
@@ -435,27 +435,27 @@ class EnhancedSP500Predictor:
             print(f"Gradient Boosting Accuracy: {gb_score:.4f}")
             print(f"Ensemble Accuracy: {ensemble_score:.4f}")
             
-            # Escolher melhor modelo
+            # Choose best model
             if ensemble_score >= max(rf_score, gb_score):
                 self.model = ensemble_model
-                print("✅ Modelo escolhido: Ensemble")
+                print(" Model chosen: Ensemble")
                 best_score = ensemble_score
             elif rf_score > gb_score:
                 self.model = rf_model
-                print("✅ Modelo escolhido: Random Forest")
+                print(" Model chosen: Random Forest")
                 best_score = rf_score
             else:
                 self.model = gb_model
-                print("✅ Modelo escolhido: Gradient Boosting")
+                print(" Model chosen: Gradient Boosting")
                 best_score = gb_score
             
-            # Validação temporal
+            # Temporal validation
             if len(X_train) >= 100:
-                print("Executando validação temporal...")
+                print("Running temporal validation...")
                 cv_scores = self.time_series_validation(X_train, y_train, self.model)
                 print(f"Time Series CV: {cv_scores.mean():.4f} (+/- {cv_scores.std() * 2:.4f})")
             
-            # Relatório detalhado
+            # Detailed report
             y_pred = self.model.predict(X_test_scaled)
             print("\n📊 Classification Report:")
             print(classification_report(y_test, y_pred))
@@ -463,16 +463,16 @@ class EnhancedSP500Predictor:
             return self.model
             
         except Exception as e:
-            print(f"Erro durante treinamento: {e}")
+            print(f"Error during training: {e}")
             return None
     
     def feature_importance_analysis(self):
-        """Analisar importância das features"""
+        """Analyze feature importance"""
         if self.model is None:
             return None
         
         try:
-            # Para ensemble, usar o primeiro estimador como referência
+            # For ensemble, use first estimator as reference
             if hasattr(self.model, 'estimators_'):
                 base_model = self.model.estimators_[0]
             else:
@@ -486,42 +486,42 @@ class EnhancedSP500Predictor:
                 
                 return importance_df
         except Exception as e:
-            print(f"Erro na análise de importância: {e}")
+            print(f"Error in importance analysis: {e}")
         
         return None
     
     def predict_next_day(self, data):
-        """Fazer previsão avançada para o próximo dia"""
+        """Make advanced prediction for next day"""
         if self.model is None:
-            raise ValueError("Modelo não foi treinado ainda!")
+            raise ValueError("Model has not been trained yet!")
         
         try:
-            # Preparar dados mais recentes
+            # Prepare most recent data
             df_features = self.create_features(data)
             if df_features is None:
-                raise ValueError("Erro ao criar features para previsão")
+                raise ValueError("Error creating features for prediction")
             
-            # Pegar últimas features
+            # Get latest features
             latest_features = df_features[self.features].iloc[-1:].values
             
-            # Verificar e corrigir valores inválidos
+            # Check and fix invalid values
             if np.any(np.isnan(latest_features)) or np.any(np.isinf(latest_features)):
-                print("⚠ Valores inválidos detectados, corrigindo...")
+                print("⚠ Invalid values detected, fixing...")
                 latest_features = np.nan_to_num(latest_features, nan=0.0, posinf=1.0, neginf=-1.0)
             
-            # Normalizar
+            # Normalize
             latest_features_scaled = self.scaler.transform(latest_features)
             
-            # Fazer previsão
+            # Make prediction
             prediction = self.model.predict(latest_features_scaled)[0]
             probability = self.model.predict_proba(latest_features_scaled)[0]
             
-            # Probabilidades
+            # Probabilities
             prob_down = probability[0]
             prob_up = probability[1]
             confidence = max(prob_up, prob_down)
             
-            # Análise adicional de regime
+            # Additional regime analysis
             regime_info = ""
             if 'bull_market' in df_features.columns:
                 if df_features['bull_market'].iloc[-1] == 1:
@@ -542,33 +542,33 @@ class EnhancedSP500Predictor:
             }
             
         except Exception as e:
-            print(f"Erro na previsão: {e}")
+            print(f"Error in prediction: {e}")
             raise
     
     def generate_enhanced_report(self):
-        """Relatório com análises avançadas"""
-        print("\n🚀 RELATÓRIO AVANÇADO SP500 PREDICTOR")
+        """Report with advanced analyses"""
+        print("\n ENHANCED SP500 PREDICTOR REPORT")
         print("=" * 60)
         
         # Feature importance
         importance = self.feature_importance_analysis()
         if importance is not None:
-            print("\n📊 TOP 10 FEATURES MAIS IMPORTANTES:")
+            print("\n TOP 10 MOST IMPORTANT FEATURES:")
             for _, row in importance.head(10).iterrows():
                 print(f"   • {row['feature']}: {row['importance']:.4f}")
         
-        # Estatísticas do modelo
+        # Model statistics
         if hasattr(self.model, 'estimators_'):
-            print(f"\n🤖 MODELO: Ensemble com {len(self.model.estimators_)} estimadores")
+            print(f"\n MODEL: Ensemble with {len(self.model.estimators_)} estimators")
         else:
-            print(f"\n🤖 MODELO: {type(self.model).__name__}")
+            print(f"\n MODEL: {type(self.model).__name__}")
         
-        print(f"📈 FEATURES TOTAIS: {len(self.features)}")
+        print(f" TOTAL FEATURES: {len(self.features)}")
     
     def save_model(self, filepath='enhanced_sp500_model.pkl'):
-        """Salvar modelo treinado"""
+        """Save trained model"""
         if self.model is None:
-            print("Erro: Nenhum modelo para salvar")
+            print("Error: No model to save")
             return False
         
         try:
@@ -579,110 +579,110 @@ class EnhancedSP500Predictor:
                 'model_type': 'enhanced'
             }
             joblib.dump(model_data, filepath)
-            print(f"✅ Modelo avançado salvo em: {filepath}")
+            print(f" Advanced model saved to: {filepath}")
             return True
         except Exception as e:
-            print(f"Erro ao salvar modelo: {e}")
+            print(f"Error saving model: {e}")
             return False
     
     def load_model(self, filepath='enhanced_sp500_model.pkl'):
-        """Carregar modelo treinado"""
+        """Load trained model"""
         try:
             model_data = joblib.load(filepath)
             self.model = model_data['model']
             self.scaler = model_data['scaler']
             self.features = model_data['features']
-            print(f"✅ Modelo avançado carregado de: {filepath}")
+            print(f" Advanced model loaded from: {filepath}")
             return True
         except Exception as e:
-            print(f"Erro ao carregar modelo: {e}")
+            print(f"Error loading model: {e}")
             return False
     
     def run_daily_prediction(self):
-        """Executar previsão diária avançada"""
-        print("🎯 === PREVISÃO DIÁRIA S&P 500 AVANÇADA ===")
-        print(f"📅 Data: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+        """Run advanced daily prediction"""
+        print(" === ADVANCED S&P 500 DAILY PREDICTION ===")
+        print(f" Date: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
         
-        # Baixar dados mais recentes
+        # Download most recent data
         data = self.download_data(period="3y")
         if data is None:
-            print("❌ Erro: Não foi possível baixar dados")
+            print(" Error: Could not download data")
             return
         
-        # Tentar carregar modelo existente
+        # Try to load existing model
         if not self.load_model():
-            print("🔄 Treinando novo modelo avançado...")
+            print(" Training new advanced model...")
             df_features = self.create_features(data)
             if df_features is None:
-                print("❌ Erro: Não foi possível criar features")
+                print(" Error: Could not create features")
                 return
             
             X, y = self.prepare_data(df_features)
             if X is None or y is None:
-                print("❌ Erro: Não foi possível preparar dados")
+                print(" Error: Could not prepare data")
                 return
             
             model = self.train_model(X, y)
             if model is None:
-                print("❌ Erro: Não foi possível treinar modelo")
+                print(" Error: Could not train model")
                 return
             
             self.save_model()
         
-        # Fazer previsão
+        # Make prediction
         try:
             result = self.predict_next_day(data)
             
-            print(f"\n🎯 PREVISÃO PARA AMANHÃ:")
-            print(f"📊 Direção: {result['prediction']}")
-            print(f"📈 Prob. UP: {result['probability_up']:.1%}")
-            print(f"📉 Prob. DOWN: {result['probability_down']:.1%}")
-            print(f"🎯 Confiança: {result['confidence']:.1%}")
+            print(f"\n PREDICTION FOR TOMORROW:")
+            print(f" Direction: {result['prediction']}")
+            print(f" Prob. UP: {result['probability_up']:.1%}")
+            print(f" Prob. DOWN: {result['probability_down']:.1%}")
+            print(f" Confidence: {result['confidence']:.1%}")
             
             if result['market_regime']:
-                print(f"🏛️  Regime: {result['market_regime']}")
+                print(f"  Regime: {result['market_regime']}")
             
             if result['vix_level']:
-                print(f"😰 VIX Level: {result['vix_level']:.1f}")
+                print(f" VIX Level: {result['vix_level']:.1f}")
             
             if result['trend_strength'] is not None:
-                trend = "Forte" if abs(result['trend_strength']) > 0.7 else "Moderada" if abs(result['trend_strength']) > 0.3 else "Fraca"
-                direction = "Alta" if result['trend_strength'] > 0 else "Baixa"
-                print(f"📈 Tendência: {trend} {direction}")
+                trend = "Strong" if abs(result['trend_strength']) > 0.7 else "Moderate" if abs(result['trend_strength']) > 0.3 else "Weak"
+                direction = "Up" if result['trend_strength'] > 0 else "Down"
+                print(f" Trend: {trend} {direction}")
             
-            # Info adicional
+            # Additional info
             last_close = data['Close'].iloc[-1]
             last_volume = data['Volume'].iloc[-1]
-            print(f"\n💰 Último fechamento: ${last_close:.2f}")
-            print(f"📊 Market Cap: {last_volume:,.0f}")
+            print(f"\n Last close: ${last_close:.2f}")
+            print(f" Volume: {last_volume:,.0f}")
             
-            # Interpretar resultado
+            # Interpret result
             if result['confidence'] > 0.65:
-                confidence_level = "🟢 ALTA"
+                confidence_level = "🟢 HIGH"
             elif result['confidence'] > 0.58:
-                confidence_level = "🟡 MÉDIA"
+                confidence_level = "🟡 MEDIUM"
             else:
-                confidence_level = "🔴 BAIXA"
+                confidence_level = "🔴 LOW"
             
-            print(f"🎯 Nível de confiança: {confidence_level}")
+            print(f" Confidence level: {confidence_level}")
             
-            # Gerar relatório avançado
+            # Generate advanced report
             self.generate_enhanced_report()
             
-            # Salvar previsão
+            # Save prediction
             prediction_data = {
-                "data": datetime.now().strftime("%Y-%m-%d"),
-                "direcao": result['prediction'],
-                "prob_subir": round(result['probability_up'], 4),
-                "prob_descer": round(result['probability_down'], 4),
-                "confianca": round(result['confidence'], 4),
-                "preco_fechamento": round(last_close, 2),
-                "Market Cap": int(last_volume),
-                "regime_mercado": result.get('market_regime', ''),
+                "date": datetime.now().strftime("%Y-%m-%d"),
+                "direction": result['prediction'],
+                "prob_up": round(result['probability_up'], 4),
+                "prob_down": round(result['probability_down'], 4),
+                "confidence": round(result['confidence'], 4),
+                "close_price": round(last_close, 2),
+                "volume": int(last_volume),
+                "market_regime": result.get('market_regime', ''),
                 "vix_level": round(result['vix_level'], 2) if result['vix_level'] else None,
                 "trend_strength": round(result['trend_strength'], 4) if result['trend_strength'] is not None else None,
                 "num_features": len(self.features),
-                "modelo_tipo": "Enhanced"
+                "model_type": "Enhanced"
             }
 
             csv_file = "enhanced_daily_predictions.csv"
@@ -694,92 +694,92 @@ class EnhancedSP500Predictor:
                     if not file_exists:
                         writer.writeheader()
                     writer.writerow(prediction_data)
-                print(f"\n✅ Previsão avançada guardada em {csv_file}")
+                print(f"\n Advanced prediction saved to {csv_file}")
             except Exception as e:
-                print(f"❌ Erro ao guardar previsão: {e}")
+                print(f" Error saving prediction: {e}")
                 
         except Exception as e:
-            print(f"❌ Erro na previsão: {e}")
+            print(f" Error in prediction: {e}")
     
     def backtest_strategy(self, data, start_date=None, end_date=None):
-        """Backtest da estratégia com métricas avançadas"""
+        """Backtest strategy with advanced metrics"""
         if self.model is None:
-            print("❌ Modelo não treinado")
+            print(" Model not trained")
             return None
         
         try:
-            print("🔄 Executando backtest...")
+            print(" Running backtest...")
             
-            # Preparar dados para backtest
+            # Prepare data for backtest
             df_features = self.create_features(data)
             if df_features is None:
                 return None
             
-            # Filtrar período se especificado
+            # Filter period if specified
             if start_date:
                 df_features = df_features[df_features.index >= start_date]
             if end_date:
                 df_features = df_features[df_features.index <= end_date]
             
             if len(df_features) < 50:
-                print("❌ Dados insuficientes para backtest")
+                print(" Insufficient data for backtest")
                 return None
             
-            # Fazer previsões para todo o período
+            # Make predictions for entire period
             X = df_features[self.features]
             y_true = df_features['target']
             
-            # Normalizar
+            # Normalize
             X_scaled = self.scaler.transform(X)
             
-            # Previsões
+            # Predictions
             y_pred = self.model.predict(X_scaled)
             y_proba = self.model.predict_proba(X_scaled)
             
-            # Calcular retornos
-            returns = df_features['returns'].shift(-1)  # Próximo dia
+            # Calculate returns
+            returns = df_features['returns'].shift(-1)  # Next day
             
-            # Estratégia: seguir previsões com alta confiança
+            # Strategy: follow predictions with high confidence
             confidence_threshold = 0.6
             max_proba = np.max(y_proba, axis=1)
             high_confidence_mask = max_proba >= confidence_threshold
             
-            # Calcular performance
+            # Calculate performance
             strategy_returns = []
             buy_hold_returns = []
             positions = []
             
-            for i in range(len(y_pred) - 1):  # -1 porque precisamos do retorno do próximo dia
+            for i in range(len(y_pred) - 1):  # -1 because we need next day return
                 actual_return = returns.iloc[i]
                 
                 if high_confidence_mask[i]:
-                    if y_pred[i] == 1:  # Previsão de subida
+                    if y_pred[i] == 1:  # Prediction of up
                         strategy_return = actual_return
                         position = 'LONG'
-                    else:  # Previsão de descida
+                    else:  # Prediction of down
                         strategy_return = -actual_return
                         position = 'SHORT'
                 else:
-                    strategy_return = 0  # Ficar fora do mercado
+                    strategy_return = 0  # Stay out of market
                     position = 'HOLD'
                 
                 strategy_returns.append(strategy_return)
-                buy_hold_returns.append(actual_return)  # Sempre long
+                buy_hold_returns.append(actual_return)  # Always long
                 positions.append(position)
             
-            # Métricas de performance
+            # Performance metrics
             strategy_returns = np.array(strategy_returns)
             buy_hold_returns = np.array(buy_hold_returns)
             
-            # Retornos cumulativos
+            # Cumulative returns
             strategy_cumret = np.cumprod(1 + strategy_returns) - 1
             buyhold_cumret = np.cumprod(1 + buy_hold_returns) - 1
             
-            # Métricas
+            # Metrics
             total_strategy_return = strategy_cumret[-1]
             total_buyhold_return = buyhold_cumret[-1]
             
-            # Sharpe ratio (assumindo 252 dias de trading)
+            # Sharpe ratio (assuming 252 trading days)
             strategy_sharpe = np.mean(strategy_returns) / np.std(strategy_returns) * np.sqrt(252) if np.std(strategy_returns) > 0 else 0
             buyhold_sharpe = np.mean(buy_hold_returns) / np.std(buy_hold_returns) * np.sqrt(252) if np.std(buy_hold_returns) > 0 else 0
             
@@ -798,7 +798,7 @@ class EnhancedSP500Predictor:
             total_trades = np.sum(high_confidence_mask)
             win_rate = winning_trades / total_trades if total_trades > 0 else 0
             
-            # Accuracy geral
+            # Overall accuracy
             accuracy = accuracy_score(y_true[:-1], y_pred[:-1])
             
             results = {
@@ -820,53 +820,53 @@ class EnhancedSP500Predictor:
             return results
             
         except Exception as e:
-            print(f"❌ Erro no backtest: {e}")
+            print(f" Error in backtest: {e}")
             return None
     
     def print_backtest_results(self, results):
-        """Imprimir resultados do backtest de forma organizada"""
+        """Print backtest results in organized way"""
         if results is None:
             return
         
-        print("\n📊 === RESULTADOS DO BACKTEST ===")
-        print(f"📅 Período: {results['period']}")
-        print(f"📈 Total de dias: {results['total_days']}")
-        print(f"💼 Dias de trading: {results['trading_days']}")
-        print(f"📊 Threshold de confiança: {results['confidence_threshold']:.1%}")
+        print("\n === BACKTEST RESULTS ===")
+        print(f" Period: {results['period']}")
+        print(f" Total days: {results['total_days']}")
+        print(f" Trading days: {results['trading_days']}")
+        print(f" Confidence threshold: {results['confidence_threshold']:.1%}")
         
-        print(f"\n🎯 PERFORMANCE:")
+        print(f"\n PERFORMANCE:")
         print(f"   Accuracy: {results['accuracy']:.1%}")
         print(f"   Win Rate: {results['win_rate']:.1%}")
         
-        print(f"\n💰 RETORNOS:")
-        print(f"   Estratégia: {results['strategy_return']:.1%}")
+        print(f"\n RETURNS:")
+        print(f"   Strategy: {results['strategy_return']:.1%}")
         print(f"   Buy & Hold: {results['buyhold_return']:.1%}")
-        print(f"   Excesso: {results['excess_return']:.1%}")
+        print(f"   Excess: {results['excess_return']:.1%}")
         
-        print(f"\n📊 MÉTRICAS DE RISCO:")
-        print(f"   Sharpe Estratégia: {results['strategy_sharpe']:.2f}")
-        print(f"   Sharpe Buy&Hold: {results['buyhold_sharpe']:.2f}")
-        print(f"   Max DD Estratégia: {results['strategy_mdd']:.1%}")
-        print(f"   Max DD Buy&Hold: {results['buyhold_mdd']:.1%}")
+        print(f"\n RISK METRICS:")
+        print(f"   Strategy Sharpe: {results['strategy_sharpe']:.2f}")
+        print(f"   Buy&Hold Sharpe: {results['buyhold_sharpe']:.2f}")
+        print(f"   Strategy Max DD: {results['strategy_mdd']:.1%}")
+        print(f"   Buy&Hold Max DD: {results['buyhold_mdd']:.1%}")
         
-        # Interpretação
+        # Interpretation
         if results['excess_return'] > 0:
-            print(f"\n✅ A estratégia superou o Buy & Hold em {results['excess_return']:.1%}")
+            print(f"\n Strategy outperformed Buy & Hold by {results['excess_return']:.1%}")
         else:
-            print(f"\n❌ A estratégia ficou atrás do Buy & Hold em {abs(results['excess_return']):.1%}")
+            print(f"\n Strategy underperformed Buy & Hold by {abs(results['excess_return']):.1%}")
     
     def run_comprehensive_analysis(self):
-        """Executar análise completa com backtest"""
-        print("🔍 === ANÁLISE COMPLETA S&P 500 ===")
+        """Run complete analysis with backtest"""
+        print(" === COMPREHENSIVE S&P 500 ANALYSIS ===")
         
-        # Download dados
+        # Download data
         data = self.download_data(period="5y")
         if data is None:
             return
         
-        # Treinar modelo se necessário
+        # Train model if necessary
         if not self.load_model():
-            print("🔄 Treinando modelo...")
+            print(" Training model...")
             df_features = self.create_features(data)
             if df_features is None:
                 return
@@ -878,40 +878,40 @@ class EnhancedSP500Predictor:
             self.train_model(X, y)
             self.save_model()
         
-        # Fazer previsão atual
-        print("\n1️⃣ PREVISÃO ATUAL:")
+        # Make current prediction
+        print("\n CURRENT PREDICTION:")
         try:
             result = self.predict_next_day(data)
-            print(f"   Direção: {result['prediction']}")
-            print(f"   Confiança: {result['confidence']:.1%}")
+            print(f"   Direction: {result['prediction']}")
+            print(f"   Confidence: {result['confidence']:.1%}")
             print(f"   Regime: {result.get('market_regime', 'N/A')}")
         except Exception as e:
-            print(f"   Erro: {e}")
+            print(f"   Error: {e}")
         
         # Backtest
-        print("\n2️⃣ BACKTEST (últimos 2 anos):")
+        print("\n BACKTEST (last 2 years):")
         two_years_ago = datetime.now() - timedelta(days=730)
         backtest_results = self.backtest_strategy(data, start_date=two_years_ago)
         self.print_backtest_results(backtest_results)
         
-        # Relatório avançado
-        print("\n3️⃣ ANÁLISE DO MODELO:")
+        # Advanced report
+        print("\n MODEL ANALYSIS:")
         self.generate_enhanced_report()
 
-# Função principal melhorada
+# Improved main function
 def main():
-    """Função principal com opções"""
+    """Main function with options"""
     try:
         predictor = EnhancedSP500Predictor()
         
-        print("🚀 Enhanced SP500 Predictor")
-        print("Escolha uma opção:")
-        print("1 - Previsão diária")
-        print("2 - Análise completa com backtest")
-        print("3 - Apenas treinar modelo")
+        print(" Enhanced SP500 Predictor")
+        print("Choose an option:")
+        print("1 - Daily prediction")
+        print("2 - Comprehensive analysis with backtest")
+        print("3 - Train model only")
         
         try:
-            choice = input("Opção (1-3): ").strip()
+            choice = input("Option (1-3): ").strip()
         except:
             choice = "1"  # Default
         
@@ -926,14 +926,14 @@ def main():
                     if X is not None and y is not None:
                         predictor.train_model(X, y)
                         predictor.save_model()
-                        print("✅ Modelo treinado e salvo!")
-        else:  # Default: previsão diária
+                        print(" Model trained and saved!")
+        else:  # Default: daily prediction
             predictor.run_daily_prediction()
             
     except KeyboardInterrupt:
-        print("\n⏹️ Execução interrompida pelo usuário")
+        print("\n Execution interrupted by user")
     except Exception as e:
-        print(f"❌ Erro geral: {e}")
+        print(f" General error: {e}")
 
 if __name__ == "__main__":
     main()

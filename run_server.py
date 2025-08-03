@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-S&P 500 Predictor Server Startup Script - Melhorado
+S&P 500 Predictor Server Startup Script - Enhanced
 """
 
 import os
@@ -14,17 +14,17 @@ import atexit
 
 def signal_handler(sig, frame):
     """Handle Ctrl+C gracefully"""
-    print('\n\n⏹️  Servidor interrompido pelo usuário')
+    print('\n\n  Server interrupted by user')
     sys.exit(0)
 
 def check_python_version():
     """Check Python version"""
     if sys.version_info < (3, 8):
-        print("❌ Python 3.8+ é necessário")
-        print(f"   Versão atual: {sys.version}")
+        print(" Python 3.8+ is required")
+        print(f"   Current version: {sys.version}")
         return False
     
-    print(f"✅ Python {sys.version.split()[0]} detectado")
+    print(f" Python {sys.version.split()[0]} detected")
     return True
 
 def check_requirements():
@@ -43,9 +43,9 @@ def check_requirements():
     for package, pip_name in required_packages:
         try:
             __import__(package)
-            print(f"✅ {pip_name}")
+            print(f" {pip_name}")
         except ImportError:
-            print(f"❌ {pip_name} - AUSENTE")
+            print(f" {pip_name} - MISSING")
             missing.append(pip_name)
     
     return missing
@@ -55,16 +55,16 @@ def install_requirements(missing_packages):
     if not missing_packages:
         return True
     
-    print(f"\n📦 Instalando {len(missing_packages)} pacotes ausentes...")
+    print(f"\n Installing {len(missing_packages)} missing packages...")
     
     try:
         cmd = [sys.executable, "-m", "pip", "install"] + missing_packages
         subprocess.check_call(cmd)
-        print("✅ Pacotes instalados com sucesso")
+        print(" Packages installed successfully")
         return True
     except subprocess.CalledProcessError as e:
-        print(f"❌ Falha na instalação: {e}")
-        print("\n💡 Tente instalar manualmente:")
+        print(f" Installation failed: {e}")
+        print("\n Try installing manually:")
         for package in missing_packages:
             print(f"   pip install {package}")
         return False
@@ -79,37 +79,37 @@ def setup_templates():
     if not index_html.exists():
         # Check if index.html exists in current directory
         if Path("index.html").exists():
-            print("📁 Movendo index.html para templates/")
+            print(" Moving index.html to templates/")
             Path("index.html").rename(index_html)
         else:
-            print("⚠️  templates/index.html não encontrado")
-            print("   Certifique-se de que o arquivo HTML está na pasta templates/")
+            print(" templates/index.html not found")
+            print("   Make sure the HTML file is in the templates/ folder")
             return False
     
-    print("✅ Templates configurados")
+    print(" Templates configured")
     return True
 
 def check_files():
     """Check required files"""
     required_files = [
-        ("sp500_predictor.py", "Módulo principal do predictor"),
-        ("app.py", "Servidor Flask"),
-        ("templates/index.html", "Interface web")
+        ("sp500_predictor.py", "Main predictor module"),
+        ("app.py", "Flask server"),
+        ("templates/index.html", "Web interface")
     ]
     
     all_exist = True
     for file_path, description in required_files:
         if Path(file_path).exists():
-            print(f"✅ {description}")
+            print(f" {description}")
         else:
-            print(f"❌ {description} - {file_path} não encontrado")
+            print(f" {description} - {file_path} not found")
             all_exist = False
     
     return all_exist
 
 def test_predictor():
     """Test if predictor works"""
-    print("\n🧪 Testando predictor básico...")
+    print("\n Testing basic predictor...")
     
     try:
         from sp500_predictor import EnhancedSP500Predictor
@@ -118,15 +118,15 @@ def test_predictor():
         # Test data download
         data = predictor.download_data(period="5d")
         if data is None or data.empty:
-            print("❌ Falha no download de dados de teste")
+            print(" Test data download failed")
             return False
         
-        print(f"✅ Download de dados funcionando (últimos 5 dias)")
-        print(f"   Último preço: ${data['Close'].iloc[-1]:.2f}")
+        print(f" Data download working (last 5 days)")
+        print(f"   Last price: ${data['Close'].iloc[-1]:.2f}")
         return True
         
     except Exception as e:
-        print(f"❌ Erro no teste do predictor: {e}")
+        print(f" Predictor test error: {e}")
         return False
 
 def check_port(port=5000):
@@ -140,13 +140,13 @@ def check_port(port=5000):
         sock.close()
         
         if result == 0:
-            print(f"⚠️  Porta {port} já está em uso")
+            print(f"  Port {port} is already in use")
             return False
         else:
-            print(f"✅ Porta {port} disponível")
+            print(f" Port {port} available")
             return True
     except Exception as e:
-        print(f"⚠️  Erro verificando porta: {e}")
+        print(f"  Error checking port: {e}")
         return True  # Assume available if can't check
 
 def open_browser_delayed(url, delay=3):
@@ -155,10 +155,10 @@ def open_browser_delayed(url, delay=3):
         time.sleep(delay)
         try:
             webbrowser.open(url)
-            print(f"🌐 Abrindo navegador: {url}")
+            print(f" Opening browser: {url}")
         except Exception as e:
-            print(f"⚠️  Não foi possível abrir o navegador: {e}")
-            print(f"   Acesse manualmente: {url}")
+            print(f"  Could not open browser: {e}")
+            print(f"   Access manually: {url}")
     
     import threading
     browser_thread = threading.Thread(target=open_browser, daemon=True)
@@ -166,11 +166,11 @@ def open_browser_delayed(url, delay=3):
 
 def start_server(port=5000):
     """Start the Flask server"""
-    print(f"\n🚀 Iniciando S&P 500 Predictor Server na porta {port}...")
+    print(f"\n Starting S&P 500 Predictor Server on port {port}...")
     print("=" * 60)
-    print("📊 Dashboard: http://localhost:5000")
-    print("🔧 API Status: http://localhost:5000/api/status")
-    print("⏹️  Para parar: Ctrl+C")
+    print(" Dashboard: http://localhost:5000")
+    print(" API Status: http://localhost:5000/api/status")
+    print("  To stop: Ctrl+C")
     print("=" * 60)
     
     # Register signal handler
@@ -191,22 +191,22 @@ def start_server(port=5000):
         )
         
     except ImportError as e:
-        print(f"❌ Erro importando app.py: {e}")
+        print(f" Error importing app.py: {e}")
         return False
     except OSError as e:
         if "Address already in use" in str(e):
-            print(f"❌ Porta {port} já está em uso")
-            print("   Tente uma porta diferente ou pare o processo existente")
+            print(f" Port {port} is already in use")
+            print("   Try a different port or stop the existing process")
         else:
-            print(f"❌ Erro do sistema: {e}")
+            print(f" System error: {e}")
         return False
     except Exception as e:
-        print(f"❌ Erro inesperado: {e}")
+        print(f" Unexpected error: {e}")
         return False
 
 def cleanup_old_files():
     """Clean up old or corrupted files"""
-    print("🧹 Limpando arquivos antigos...")
+    print(" Cleaning up old files...")
     
     # Check for corrupted model
     model_file = Path("enhanced_sp500_model.pkl")
@@ -214,56 +214,56 @@ def cleanup_old_files():
         try:
             import joblib
             joblib.load(model_file)
-            print("✅ Modelo existente válido")
+            print(" Existing model is valid")
         except Exception:
-            print("⚠️  Modelo corrompido, removendo...")
+            print("  Corrupted model, removing...")
             model_file.unlink()
-            print("✅ Modelo removido - será retreinado automaticamente")
+            print(" Model removed - will be retrained automatically")
     
     # Clean up old log files if too large
     log_files = ["sp500_predictions.log"]
     for log_file in log_files:
         log_path = Path(log_file)
         if log_path.exists() and log_path.stat().st_size > 10_000_000:  # 10MB
-            print(f"🗑️  Removendo log grande: {log_file}")
+            print(f"Removing large log: {log_file}")
             log_path.unlink()
 
 def show_system_info():
     """Show system information"""
-    print("💻 INFORMAÇÕES DO SISTEMA")
+    print(" SYSTEM INFORMATION")
     print("-" * 30)
     print(f"Python: {sys.version.split()[0]}")
-    print(f"Plataforma: {sys.platform}")
-    print(f"Diretório: {os.getcwd()}")
+    print(f"Platform: {sys.platform}")
+    print(f"Directory: {os.getcwd()}")
     
     # Check virtual environment
     if hasattr(sys, 'real_prefix') or (hasattr(sys, 'base_prefix') and sys.base_prefix != sys.prefix):
-        print("🔒 Ambiente virtual: Ativo")
+        print(" Virtual environment: Active")
     else:
-        print("⚠️  Ambiente virtual: Inativo (recomendado usar venv)")
+        print("  Virtual environment: Inactive (recommended to use venv)")
 
 def interactive_setup():
     """Interactive setup process"""
-    print("🔧 CONFIGURAÇÃO INTERATIVA")
+    print(" INTERACTIVE SETUP")
     print("-" * 30)
     
     # Ask about missing dependencies
     missing = check_requirements()
     if missing:
-        response = input(f"\n❓ Instalar {len(missing)} pacotes ausentes? (y/n): ").lower()
+        response = input(f"\n❓ Install {len(missing)} missing packages? (y/n): ").lower()
         if response in ['y', 'yes', 's', 'sim']:
             if not install_requirements(missing):
                 return False
         else:
-            print("⚠️  Instalação cancelada. O sistema pode não funcionar corretamente.")
+            print("  Installation cancelled. System may not work properly.")
     
     # Ask about port
     try:
-        port_input = input("\n❓ Porta do servidor (padrão: 5000): ").strip()
+        port_input = input("\n❓ Server port (default: 5000): ").strip()
         port = int(port_input) if port_input else 5000
     except ValueError:
         port = 5000
-        print("⚠️  Porta inválida, usando padrão: 5000")
+        print("  Invalid port, using default: 5000")
     
     return port
 
@@ -271,7 +271,7 @@ def quick_start():
     """Quick start without interaction"""
     missing = check_requirements()
     if missing:
-        print("📦 Instalando dependências automaticamente...")
+        print(" Installing dependencies automatically...")
         if not install_requirements(missing):
             return False
     
@@ -279,7 +279,7 @@ def quick_start():
 
 def main():
     """Main function"""
-    print("🚀 S&P 500 AI Predictor - Inicialização")
+    print(" S&P 500 AI Predictor - Initialization")
     print("=" * 50)
     
     # Check Python version first
@@ -293,11 +293,11 @@ def main():
     cleanup_old_files()
     
     # Check required files
-    print(f"\n📁 VERIFICANDO ARQUIVOS")
+    print(f"\n CHECKING FILES")
     print("-" * 30)
     if not check_files():
-        print("\n❌ Arquivos essenciais ausentes!")
-        print("   Certifique-se de que todos os arquivos estão no diretório correto.")
+        print("\n Essential files missing!")
+        print("   Make sure all files are in the correct directory.")
         return
     
     # Setup templates
@@ -305,7 +305,7 @@ def main():
         return
     
     # Check dependencies and get port
-    print(f"\n📦 VERIFICANDO DEPENDÊNCIAS")
+    print(f"\n CHECKING DEPENDENCIES")
     print("-" * 30)
     
     # Check if running interactively
@@ -320,30 +320,30 @@ def main():
     # Check port availability
     if not check_port(port):
         alt_port = port + 1
-        print(f"🔄 Tentando porta alternativa: {alt_port}")
+        print(f" Trying alternative port: {alt_port}")
         if check_port(alt_port):
             port = alt_port
         else:
-            print("❌ Nenhuma porta disponível encontrada")
+            print(" No available port found")
             return
     
     # Test predictor
-    print(f"\n🧪 TESTE DO SISTEMA")
+    print(f"\n SYSTEM TEST")
     print("-" * 30)
     if not test_predictor():
-        response = input("\n❓ Predictor com problemas. Continuar mesmo assim? (y/n): ").lower()
+        response = input("\n❓ Predictor has issues. Continue anyway? (y/n): ").lower()
         if response not in ['y', 'yes', 's', 'sim']:
-            print("⏹️  Inicialização cancelada")
+            print("  Initialization cancelled")
             return
     
     # Final confirmation
-    print(f"\n✅ SISTEMA PRONTO")
+    print(f"\n SYSTEM READY")
     print("-" * 30)
-    print("🎯 Tudo configurado e funcionando!")
-    print(f"🌐 Servidor será iniciado em: http://localhost:{port}")
+    print(" Everything configured and working!")
+    print(f" Server will start at: http://localhost:{port}")
     
     if '--auto' not in sys.argv:
-        input("\n▶️  Pressione Enter para iniciar o servidor...")
+        input("\n  Press Enter to start server...")
     
     # Start server
     start_server(port)
@@ -352,13 +352,13 @@ if __name__ == "__main__":
     try:
         main()
     except KeyboardInterrupt:
-        print("\n\n⏹️  Inicialização interrompida pelo usuário")
+        print("\n\n  Initialization interrupted by user")
     except Exception as e:
-        print(f"\n❌ Erro durante inicialização: {e}")
+        print(f"\n Error during initialization: {e}")
         import traceback
         traceback.print_exc()
-        print("\n💡 Dicas:")
-        print("1. Verifique se todos os arquivos estão presentes")
-        print("2. Execute: python debug_server.py para diagnósticos")
-        print("3. Verifique conexão com internet")
-        print("4. Tente executar: python app.py diretamente")
+        print("\n Tips:")
+        print("1. Check if all files are present")
+        print("2. Run: python debug_server.py for diagnostics")
+        print("3. Check internet connection")
+        print("4. Try running: python app.py directly")

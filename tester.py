@@ -115,7 +115,7 @@ class TestRunner:
     def run_test_file(self, test_file):
         """Run tests from a specific file"""
         print(f"\n{'='*60}")
-        print(f"🧪 Running tests from: {test_file.name}")
+        print(f" Running tests from: {test_file.name}")
         print(f"{'='*60}")
         
         # Add test directory to Python path
@@ -209,17 +209,17 @@ class TestRunner:
         """Run all discovered tests"""
         self.start_time = datetime.now()
         
-        print("🚀 S&P 500 Predictor - Test Suite Runner")
+        print(" S&P 500 Predictor - Test Suite Runner")
         print("=" * 60)
         print(f"Started at: {self.start_time.strftime('%Y-%m-%d %H:%M:%S')}")
         
         test_files = self.discover_tests()
         
         if not test_files:
-            print("❌ No test files found!")
+            print(" No test files found!")
             return
         
-        print(f"📁 Found {len(test_files)} test files:")
+        print(f" Found {len(test_files)} test files:")
         for file in test_files:
             print(f"   • {file.name}")
         
@@ -238,7 +238,7 @@ class TestRunner:
         total_duration = (self.end_time - self.start_time).total_seconds()
         
         print(f"\n{'='*80}")
-        print("📋 COMPREHENSIVE TEST REPORT")
+        print(" COMPREHENSIVE TEST REPORT")
         print(f"{'='*80}")
         
         # Overall statistics
@@ -248,8 +248,8 @@ class TestRunner:
         total_errors = sum(r.errors for r in self.results.values())
         total_skipped = sum(r.skipped for r in self.results.values())
         
-        print(f"🕐 Execution Time: {total_duration:.2f} seconds")
-        print(f"📊 Overall Results:")
+        print(f" Execution Time: {total_duration:.2f} seconds")
+        print(f" Overall Results:")
         print(f"   Total Tests: {total_tests}")
         print(f"    Passed: {total_passed} ({total_passed/total_tests*100:.1f}%)" if total_tests > 0 else "   Passed: 0")
         print(f"    Failed: {total_failed} ({total_failed/total_tests*100:.1f}%)" if total_tests > 0 else "   Failed: 0")
@@ -259,7 +259,7 @@ class TestRunner:
         # Success rate
         if total_tests > 0:
             success_rate = (total_passed / total_tests) * 100
-            print(f"\n🎯 Success Rate: {success_rate:.1f}%")
+            print(f"\n Success Rate: {success_rate:.1f}%")
             
             if success_rate >= 89.5:
                 print("🟢 Excellent! High test success rate.")
@@ -269,7 +269,7 @@ class TestRunner:
                 print("🔴 Low test success rate - attention needed.")
         
         # Per-file breakdown
-        print(f"\n📁 Per-File Breakdown:")
+        print(f"\n Per-File Breakdown:")
         print("-" * 80)
         
         for file_name, result in self.results.items():
@@ -340,9 +340,9 @@ class TestRunner:
         try:
             with open(report_file, 'w') as f:
                 json.dump(report_data, f, indent=2)
-            print(f"\n📄 Detailed report saved to: {report_file}")
+            print(f"\n Detailed report saved to: {report_file}")
         except Exception as e:
-            print(f"⚠️  Could not save report file: {e}")
+            print(f"  Could not save report file: {e}")
 
 
 def main():
