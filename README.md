@@ -62,6 +62,37 @@ templates/index.html # Web interface dashboard
 4. **Prediction Generation**: Probabilistic forecasts with confidence intervals
 5. **Performance Evaluation**: Comprehensive backtesting and metric calculation
 
+## Testing Strategy
+
+This project uses a layered testing strategy to ensure stability and correctness:
+
+- **Unit Tests**: Validate the behavior of individual functions and model components (`Tests/test_sp500_predictor.py`)
+- **API Tests**: Ensure REST endpoints are functioning as expected (`Tests/test_api.py`)
+- **Acceptance Tests**: Simulate end-to-end user scenarios (`Tests/test_acceptance.py`)
+- **Benchmark Tests**:  Measure the performance and efficiency of the system under typical and peak conditions (`Tests/benchmark_tester.py`)
+
+   - API layer: 100% passed
+   - Unit layer: 96.7% passed
+   - Acceptance: 72.2% passed
+   - Benchmark: 83.3% passed
+
+ *Most tests passed. Minor issues remain and are under review.*
+
+### Latest Test Summary (from `Tests/test_report.json`)
+
+
+## 🔁 Agile Development Process
+
+The development of this system follows **Agile principles**:
+- Short iterations with working increments
+- Regular code reviews and refactoring
+- Continuous testing and validation
+- User-centered feedback integration
+- Backlog management using GitHub Projects
+
+This allows fast adaptation to new data sources, features, or model improvements while maintaining production quality and stability.
+
+
 ## Installation
 
 ### Prerequisites
@@ -103,7 +134,7 @@ pip install flask flask-cors yfinance pandas numpy scikit-learn joblib
 
 ### Web Interface
 1. Start the server: `python run_server.py`
-2. Open browser to `http://localhost:5000` (In most machines it will open automatically)
+2. Open browser to `http://localhost:5002` (In most machines it will open automatically)
 3. Use the dashboard to run predictions, backtests, and model training
 
 <div style="text-align:center;">
