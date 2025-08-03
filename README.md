@@ -48,6 +48,19 @@ This project implements an enhanced market prediction system that leverages mult
 - **Volume Analysis**: Trading activity and liquidity assessment
 - **Microstructure Features**: Gap analysis, true range, and price efficiency
 
+<div style="text-align:center;">
+  <img src="assets/img1.png" alt="Descrição" height="500">
+</div>
+<div style="text-align:center;">
+  <img src="assets/img2.png" alt="Descrição" height="auto">
+</div>
+<div style="text-align:center;">
+  <img src="assets/img3.png" alt="Descrição" height="auto">
+</div>
+<div style="text-align:center;">
+  <img src="assets/img4.png" alt="Descrição" height="500">
+</div>
+
 ## System Architecture
 
 
